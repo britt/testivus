@@ -4,6 +4,7 @@ package testivus
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -14,6 +15,52 @@ import (
 type Disappointments struct {
 	sync.Mutex `json:"-"`
 	Grievances map[string][]Disappointment `json:"grievances"`
+}
+
+// String renders a text representation of your disappointments for the
+// airing of grievances.
+func (d *Disappointments) String() string {
+	d.Lock()
+	defer d.Unlock()
+
+	count, rows := d.summarize()
+	if !testing.Verbose() {
+		return fmt.Sprintf("I gotta lot of problems with you people! (%d disappointments)\n", count)
+	}
+
+	// TODO: add chart
+	s := fmt.Sprintf("I gotta lot of problems with you people! (%d disappointments)\n", count)
+	for _, r := range rows {
+		s += fmt.Sprintf("\t%s: %d\n", r.Tag, r.Count)
+	}
+
+	return s
+}
+
+type reportRow struct {
+	Tag   string
+	Count int
+}
+
+func (d *Disappointments) summarize() (count int, rows []reportRow) {
+	countByTag := make(map[string]int)
+	for _, v := range d.Grievances {
+		count += len(v)
+		for _, g := range v {
+			for _, t := range g.Tags {
+				countByTag[t] = countByTag[t] + 1
+			}
+		}
+	}
+
+	for t, c := range countByTag {
+		rows = append(rows, reportRow{Tag: t, Count: c})
+	}
+
+	sort.SliceStable(rows, func(i, j int) bool {
+		return rows[i].Count > rows[j].Count
+	})
+	return count, rows
 }
 
 // Disappointment is how your code has disappointed you
@@ -50,13 +97,7 @@ func New(m *testing.M) *Disappointments {
 // Report airs your grievances and shows a report of your disappointments.
 // Use this only if you need a custom TestMain. Otherwise you should just use Run.
 func Report(d *Disappointments) {
-	running.Lock()
-	defer running.Unlock()
-	var count int
-	for _, v := range running.Grievances {
-		count += len(v)
-	}
-	fmt.Printf("I gotta lot of problems with you people! (%d disappointments)\n", count)
+	fmt.Printf(d.String())
 }
 
 // Grievance registers a Disappointment
