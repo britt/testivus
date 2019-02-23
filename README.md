@@ -42,3 +42,10 @@ I gotta lot of problems with you people! (3 disappointments)
 ok  	github.com/britt/testivus	0.006s
 Success: Tests passed.
 ```
+
+## To-do
+
+* [ ] Honor the `-v` flag
+* [ ] Count by tag in the report
+* [ ] Formatting for stdout reporting
+* [ ] Report to file
