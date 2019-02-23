@@ -28,3 +28,17 @@ func TestTestivus(t *testing.T) {
 	testivus.Grievance(t, "You're send too much data!", "speed", "download")
 }
 ```
+
+### Output
+
+```
+=== RUN   TestTestivus
+	DISAPPOINTMENT: My son tells me your company stinks!
+	DISAPPOINTMENT: You're slow! (speed)
+	DISAPPOINTMENT: You're send too much data! (speed, download)
+--- PASS: TestTestivus (0.00s)
+PASS
+I gotta lot of problems with you people! (3 disappointments)
+ok  	github.com/britt/testivus	0.006s
+Success: Tests passed.
+```
