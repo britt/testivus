@@ -3,6 +3,7 @@ package testivus
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"os"
 	"sort"
@@ -11,6 +12,12 @@ import (
 	"testing"
 	"text/tabwriter"
 )
+
+var reportFile string
+
+func init() {
+	flag.StringVar(&reportFile, "testivus.outputfile", "", "write a detailed disappointment report to a file")
+}
 
 // Disappointments are all the ways your code has let you down without
 // explicitly failing.
@@ -88,6 +95,7 @@ var running *Disappointments
 
 // Run can be used in place of TestMain to allow disappointment reporting
 func Run(m *testing.M) {
+	flag.Parse()
 	running = New(m)
 	code := m.Run()
 	Report(running)
