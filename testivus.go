@@ -65,7 +65,9 @@ func Grievance(t *testing.T, msg string, tags ...string) {
 	defer running.Unlock()
 
 	g := Disappointment{Message: msg, Tags: tags}
-	fmt.Println("\tDISAPPOINTMENT:", g)
+	if testing.Verbose() {
+		fmt.Println("\tDISAPPOINTMENT:", g)
+	}
 
 	v, ok := running.Grievances[t.Name()]
 	if !ok {
