@@ -47,5 +47,6 @@ Success: Tests passed.
 
 * [x] Honor the `-v` flag
 * [x] Count by tag in the report
-* [ ] Formatting for stdout reporting
+* [x] Formatting for stdout reporting
 * [ ] Report to file
+    - [ ] Count broken down by test
