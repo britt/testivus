@@ -112,10 +112,15 @@ func New(m *testing.M) *Disappointments {
 // Use this only if you need a custom TestMain. Otherwise you should just use Run.
 func Report(d *Disappointments) {
 	fmt.Printf(d.String())
+
+	if reportFile != "" {
+		// save output to file
+	}
 }
 
 // Grievance registers a Disappointment
 func Grievance(t *testing.T, msg string, tags ...string) {
+	t.Helper()
 	running.Lock()
 	defer running.Unlock()
 
