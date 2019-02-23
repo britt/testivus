@@ -32,10 +32,12 @@ func (d *Disappointments) String() string {
 
 	var buf bytes.Buffer
 	w := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)
+	fmt.Fprintf(w, "\n=== The airing of grievances:\n")
 	fmt.Fprintf(w, "I gotta lot of problems with you people! (%d disappointments)\n", count)
 	for _, r := range rows {
 		fmt.Fprintf(w, "\t%s\t%d\t%s\n", r.Tag, r.Count, strings.Repeat("|", r.Count))
 	}
+	fmt.Fprintf(w, "\n")
 	w.Flush()
 
 	return buf.String()
