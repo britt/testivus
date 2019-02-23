@@ -30,12 +30,11 @@ func (d *Disappointments) String() string {
 		return fmt.Sprintf("I gotta lot of problems with you people! (%d disappointments)\n", count)
 	}
 
-	// TODO: add chart
 	var buf bytes.Buffer
 	w := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)
 	fmt.Fprintf(w, "I gotta lot of problems with you people! (%d disappointments)\n", count)
 	for _, r := range rows {
-		fmt.Fprintf(w, "\t%s\t%d\n", r.Tag, r.Count)
+		fmt.Fprintf(w, "\t%s\t%d\t%s\n", r.Tag, r.Count, strings.Repeat("|", r.Count))
 	}
 	w.Flush()
 

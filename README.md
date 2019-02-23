@@ -46,6 +46,6 @@ Success: Tests passed.
 ## To-do
 
 * [x] Honor the `-v` flag
-* [ ] Count by tag in the report
+* [x] Count by tag in the report
 * [ ] Formatting for stdout reporting
 * [ ] Report to file
