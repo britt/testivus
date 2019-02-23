@@ -4,6 +4,7 @@ package testivus
 import (
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 )
@@ -11,8 +12,23 @@ import (
 // Disappointments are all the ways your code has let you down without
 // explicitly failing.
 type Disappointments struct {
-	sync.Mutex
-	grievances map[string][]string
+	sync.Mutex `json:"-"`
+	Grievances map[string][]Disappointment `json:"grievances"`
+}
+
+// Disappointment is how your code has disappointed you
+type Disappointment struct {
+	Message string   `json:"message"`
+	Tags    []string `json:"tags"`
+}
+
+func (d Disappointment) String() string {
+	if len(d.Tags) == 0 {
+		return d.Message
+	}
+
+	t := strings.Join(d.Tags, ", ")
+	return fmt.Sprintf("%s (%s)", d.Message, t)
 }
 
 var running *Disappointments
@@ -26,35 +42,38 @@ func Run(m *testing.M) {
 }
 
 // New creates a new set of disappointments.
-// Use this if you need a custom TestMain. Otherwise you should just use Run.
+// Use this only if you need a custom TestMain. Otherwise you should just use Run.
 func New(m *testing.M) *Disappointments {
-	return &Disappointments{grievances: make(map[string][]string)}
+	return &Disappointments{Grievances: make(map[string][]Disappointment)}
 }
 
 // Report airs your grievances and shows a report of your disappointments.
+// Use this only if you need a custom TestMain. Otherwise you should just use Run.
 func Report(d *Disappointments) {
 	running.Lock()
 	defer running.Unlock()
 	var count int
-	for _, v := range running.grievances {
+	for _, v := range running.Grievances {
 		count += len(v)
 	}
 	fmt.Printf("I gotta lot of problems with you people! (%d disappointments)\n", count)
 }
 
-// Disappointment registers a disappointment
-func Disappointment(t *testing.T, msg string) {
+// Grievance registers a Disappointment
+func Grievance(t *testing.T, msg string, tags ...string) {
 	running.Lock()
 	defer running.Unlock()
 
-	fmt.Println("\tDISAPPOINTMENT:", t.Name(), msg)
-	v, ok := running.grievances[t.Name()]
+	g := Disappointment{Message: msg, Tags: tags}
+	fmt.Println("\tDISAPPOINTMENT:", g)
+
+	v, ok := running.Grievances[t.Name()]
 	if !ok {
-		running.grievances[t.Name()] = []string{msg}
+		running.Grievances[t.Name()] = []Disappointment{g}
 		return
 	}
 
-	v = append(v, msg)
-	running.grievances[t.Name()] = v
+	v = append(v, g)
+	running.Grievances[t.Name()] = v
 	return
 }

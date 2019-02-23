@@ -15,5 +15,7 @@ func TestTestivus(t *testing.T) {
 		t.Fail()
 	}
 
-	testivus.Disappointment(t, "My son tells me your company stinks!")
+	testivus.Grievance(t, "My son tells me your company stinks!")
+	testivus.Grievance(t, "You're slow!", "speed")
+	testivus.Grievance(t, "You're send too much data!", "speed", "download")
 }
