@@ -51,6 +51,7 @@ Success: Tests passed.
 * [x] Honor the `-v` flag
 * [x] Count by tag in the report
 * [x] Formatting for stdout reporting
-* [ ] Report to file
+* [x] Report to file
     - [ ] Count broken down by test
+    - [ ] Add summary to report
 * [ ] Add a with error handler that tracks disappointments by error

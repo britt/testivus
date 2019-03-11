@@ -3,6 +3,7 @@ package testivus
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"sync"
 	"testing"
 	"text/tabwriter"
+
+	"upspin.io/errors"
 )
 
 var reportFile string
@@ -117,7 +120,11 @@ func Run(m *testing.M) {
 	flag.Parse()
 	running = New(m)
 	code := m.Run()
-	Report(running)
+	err := Report(running)
+	if err != nil {
+		fmt.Println(errors.E(err, "could not save report"))
+		os.Exit(1)
+	}
 	os.Exit(code)
 }
 
@@ -129,12 +136,24 @@ func New(m *testing.M) *Disappointments {
 
 // Report airs your grievances and shows a report of your disappointments.
 // Use this only if you need a custom TestMain. Otherwise you should just use Run.
-func Report(d *Disappointments) {
+func Report(d *Disappointments) error {
 	fmt.Printf(d.String())
 
 	if reportFile != "" {
 		// save output to file
+		out, err := os.OpenFile(reportFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+
+		err = json.NewEncoder(out).Encode(d)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 // Grievance registers a Disappointment
