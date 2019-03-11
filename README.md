@@ -53,3 +53,4 @@ Success: Tests passed.
 * [x] Formatting for stdout reporting
 * [ ] Report to file
     - [ ] Count broken down by test
+* [ ] Add a with error handler that tracks disappointments by error

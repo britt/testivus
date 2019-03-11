@@ -23,7 +23,7 @@ func init() {
 // explicitly failing.
 type Disappointments struct {
 	sync.Mutex `json:"-"`
-	Grievances map[string][]Disappointment `json:"grievances"`
+	Grievances map[string][]*Disappointment `json:"grievances"`
 }
 
 // String renders a text representation of your disappointments for the
@@ -80,6 +80,7 @@ func (d *Disappointments) summarize() (count int, rows []reportRow) {
 type Disappointment struct {
 	Message string   `json:"message"`
 	Tags    []string `json:"tags"`
+	Error   error    `json:"error"`
 }
 
 func (d Disappointment) String() string {
@@ -89,6 +90,24 @@ func (d Disappointment) String() string {
 
 	t := strings.Join(d.Tags, ", ")
 	return fmt.Sprintf("%s (%s)", d.Message, t)
+}
+
+// WithMessage sets the message on the disappointment
+func (d *Disappointment) WithMessage(msg string) *Disappointment {
+	d.Message = msg
+	return d
+}
+
+// WithError adds an error to the disappointment
+func (d *Disappointment) WithError(err error) *Disappointment {
+	d.Error = err
+	return d
+}
+
+// WithTags appends the given tags to the disappointment
+func (d *Disappointment) WithTags(tags ...string) *Disappointment {
+	d.Tags = append(d.Tags, tags...)
+	return d
 }
 
 var running *Disappointments
@@ -105,7 +124,7 @@ func Run(m *testing.M) {
 // New creates a new set of disappointments.
 // Use this only if you need a custom TestMain. Otherwise you should just use Run.
 func New(m *testing.M) *Disappointments {
-	return &Disappointments{Grievances: make(map[string][]Disappointment)}
+	return &Disappointments{Grievances: make(map[string][]*Disappointment)}
 }
 
 // Report airs your grievances and shows a report of your disappointments.
@@ -119,23 +138,23 @@ func Report(d *Disappointments) {
 }
 
 // Grievance registers a Disappointment
-func Grievance(t *testing.T, msg string, tags ...string) {
+func Grievance(t *testing.T, msg string, tags ...string) *Disappointment {
 	t.Helper()
 	running.Lock()
 	defer running.Unlock()
 
-	g := Disappointment{Message: msg, Tags: tags}
+	g := &Disappointment{Message: msg, Tags: tags}
 	if testing.Verbose() {
 		fmt.Println("\tDISAPPOINTMENT:", g)
 	}
 
 	v, ok := running.Grievances[t.Name()]
 	if !ok {
-		running.Grievances[t.Name()] = []Disappointment{g}
-		return
+		running.Grievances[t.Name()] = []*Disappointment{g}
+		return g
 	}
 
 	v = append(v, g)
 	running.Grievances[t.Name()] = v
-	return
+	return g
 }
