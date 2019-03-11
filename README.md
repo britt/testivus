@@ -30,6 +30,8 @@ func TestTestivus(t *testing.T) {
 ### Output
 
 ```
+> go test -timeout 30s github.com/britt/testivus -v -testivus.outputfile testivus.json
+
 === RUN   TestTestivus
 	DISAPPOINTMENT: My son tells me your company stinks!
 	DISAPPOINTMENT: You're slow! (speed)
@@ -38,12 +40,16 @@ func TestTestivus(t *testing.T) {
 PASS
 
 === The airing of grievances:
-I gotta lot of problems with you people! (3 disappointments)
+I gotta lot of problems with you people! (0 disappointments)
+
+By Tag:
  speed    2 ||
  download 1 |
 
-ok  	github.com/britt/testivus	0.007s
-Success: Tests passed.
+By Error:
+ timeout exceeded 1 |
+
+ok  	github.com/britt/testivus	0.019s
 ```
 
 ## To-do
@@ -53,5 +59,6 @@ Success: Tests passed.
 * [x] Formatting for stdout reporting
 * [x] Report to file
     - [ ] Count broken down by test
-    - [ ] Add summary to report
-* [ ] Add a with error handler that tracks disappointments by error
+    - [x] Add summary to report
+* [x] Add a with error handler that tracks disappointments by error
+	- [x] Add count by error to summary

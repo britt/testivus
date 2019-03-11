@@ -16,17 +16,42 @@ import (
 	"upspin.io/errors"
 )
 
-var reportFile string
-
-func init() {
-	flag.StringVar(&reportFile, "testivus.outputfile", "", "write a detailed disappointment report to a file")
-}
+var reportFile = flag.String("testivus.outputfile", "", "write a detailed disappointment report to a file")
 
 // Disappointments are all the ways your code has let you down without
 // explicitly failing.
 type Disappointments struct {
 	sync.Mutex `json:"-"`
 	Grievances map[string][]*Disappointment `json:"grievances"`
+	Summary    Summary                      `json:"summary"`
+}
+
+// Summary is an aggregation of all your disappointments
+type Summary struct {
+	Total   int
+	ByTag   map[string]int
+	ByError map[error]int
+
+	tagRows   []reportRow
+	errorRows []reportRow
+}
+
+// MarshalJSON renders the summary to JSON
+func (s Summary) MarshalJSON() ([]byte, error) {
+	m := map[string]interface{}{
+		"total": s.Total,
+		"byTag": s.ByTag,
+	}
+
+	if len(s.ByError) > 0 {
+		be := map[string]int{}
+		for e, c := range s.ByError {
+			be[e.Error()] = c
+		}
+		m["byError"] = be
+	}
+
+	return json.Marshal(m)
 }
 
 // String renders a text representation of your disappointments for the
@@ -35,30 +60,46 @@ func (d *Disappointments) String() string {
 	d.Lock()
 	defer d.Unlock()
 
-	count, rows := d.summarize()
+	s := d.summarize()
 	if !testing.Verbose() {
-		return fmt.Sprintf("I gotta lot of problems with you people! (%d disappointments)\n", count)
+		return fmt.Sprintf("I gotta lot of problems with you people! (%d disappointments)\n", s.Total)
 	}
 
 	var buf bytes.Buffer
 	w := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)
 	fmt.Fprintf(w, "\n=== The airing of grievances:\n")
-	fmt.Fprintf(w, "I gotta lot of problems with you people! (%d disappointments)\n", count)
-	for _, r := range rows {
-		fmt.Fprintf(w, "\t%s\t%d\t%s\n", r.Tag, r.Count, strings.Repeat("|", r.Count))
+	fmt.Fprintf(w, "I gotta lot of problems with you people! (%d disappointments)\n", s.Total)
+
+	if len(s.tagRows) > 0 {
+		fmt.Fprintf(w, "\nBy Tag:\n")
+		for _, r := range s.tagRows {
+			fmt.Fprintf(w, "\t%s\t%d\t%s\n", r.ID, r.Count, strings.Repeat("|", r.Count))
+		}
 	}
-	fmt.Fprintf(w, "\n")
+	w.Flush()
+
+	if len(s.errorRows) > 0 {
+		fmt.Fprintf(w, "\nBy Error:\n")
+		for _, r := range s.errorRows {
+			fmt.Fprintf(w, "\t%s\t%d\t%s\n", r.ID, r.Count, strings.Repeat("|", r.Count))
+		}
+		fmt.Fprintf(w, "\n")
+	}
 	w.Flush()
 
 	return buf.String()
 }
 
 type reportRow struct {
-	Tag   string
+	ID    string
 	Count int
 }
 
-func (d *Disappointments) summarize() (count int, rows []reportRow) {
+func (d *Disappointments) summarize() Summary {
+	s := Summary{}
+	count := 0
+
+	// count grievances by tag
 	countByTag := make(map[string]int)
 	for _, v := range d.Grievances {
 		count += len(v)
@@ -68,15 +109,34 @@ func (d *Disappointments) summarize() (count int, rows []reportRow) {
 			}
 		}
 	}
-
+	s.ByTag = countByTag
 	for t, c := range countByTag {
-		rows = append(rows, reportRow{Tag: t, Count: c})
+		s.tagRows = append(s.tagRows, reportRow{ID: t, Count: c})
 	}
 
-	sort.SliceStable(rows, func(i, j int) bool {
-		return rows[i].Count > rows[j].Count
+	sort.SliceStable(s.tagRows, func(i, j int) bool {
+		return s.tagRows[i].Count > s.tagRows[j].Count
 	})
-	return count, rows
+
+	// count grievances by error
+	countByError := make(map[error]int)
+	for _, v := range d.Grievances {
+		for _, g := range v {
+			if g.Error != nil {
+				countByError[g.Error] = countByError[g.Error] + 1
+			}
+		}
+	}
+	s.ByError = countByError
+	for e, c := range countByError {
+		s.errorRows = append(s.errorRows, reportRow{ID: e.Error(), Count: c})
+	}
+
+	sort.SliceStable(s.errorRows, func(i, j int) bool {
+		return s.errorRows[i].Count > s.errorRows[j].Count
+	})
+
+	return s
 }
 
 // Disappointment is how your code has disappointed you
@@ -139,9 +199,9 @@ func New(m *testing.M) *Disappointments {
 func Report(d *Disappointments) error {
 	fmt.Printf(d.String())
 
-	if reportFile != "" {
+	if reportFile != nil {
 		// save output to file
-		out, err := os.OpenFile(reportFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		out, err := os.OpenFile(*reportFile, os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
 			return err
 		}
@@ -151,6 +211,7 @@ func Report(d *Disappointments) error {
 		if err != nil {
 			return err
 		}
+		out.Sync()
 	}
 
 	return nil
