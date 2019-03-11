@@ -29,9 +29,11 @@ type Disappointments struct {
 // Summary is an aggregation of all your disappointments
 type Summary struct {
 	Total   int
+	ByName  map[string]int
 	ByTag   map[string]int
 	ByError map[error]int
 
+	nameRows  []reportRow
 	tagRows   []reportRow
 	errorRows []reportRow
 }
@@ -39,8 +41,9 @@ type Summary struct {
 // MarshalJSON renders the summary to JSON
 func (s Summary) MarshalJSON() ([]byte, error) {
 	m := map[string]interface{}{
-		"total": s.Total,
-		"byTag": s.ByTag,
+		"total":  s.Total,
+		"byTag":  s.ByTag,
+		"byName": s.ByName,
 	}
 
 	if len(s.ByError) > 0 {
@@ -83,8 +86,14 @@ func (d *Disappointments) String() string {
 		for _, r := range s.errorRows {
 			fmt.Fprintf(w, "\t%s\t%d\t%s\n", r.ID, r.Count, strings.Repeat("|", r.Count))
 		}
-		fmt.Fprintf(w, "\n")
 	}
+	w.Flush()
+
+	fmt.Fprintf(w, "\nBy Test:\n")
+	for _, r := range s.nameRows {
+		fmt.Fprintf(w, "\t%s\t%d\t%s\n", r.ID, r.Count, strings.Repeat("|", r.Count))
+	}
+	fmt.Fprintf(w, "\n")
 	w.Flush()
 
 	return buf.String()
@@ -118,6 +127,23 @@ func (d *Disappointments) summarize() Summary {
 		return s.tagRows[i].Count > s.tagRows[j].Count
 	})
 
+	// count grievances by name
+	countByName := make(map[string]int)
+	for _, v := range d.Grievances {
+		count += len(v)
+		for _, g := range v {
+			countByName[g.Name] = countByName[g.Name] + 1
+		}
+	}
+	s.ByName = countByName
+	for t, c := range countByName {
+		s.nameRows = append(s.nameRows, reportRow{ID: t, Count: c})
+	}
+
+	sort.SliceStable(s.nameRows, func(i, j int) bool {
+		return s.nameRows[i].Count > s.nameRows[j].Count
+	})
+
 	// count grievances by error
 	countByError := make(map[error]int)
 	for _, v := range d.Grievances {
@@ -144,6 +170,7 @@ type Disappointment struct {
 	Message string   `json:"message"`
 	Tags    []string `json:"tags"`
 	Error   error    `json:"error"`
+	Name    string   `json:"testName"`
 }
 
 func (d Disappointment) String() string {
@@ -223,7 +250,7 @@ func Grievance(t *testing.T, msg string, tags ...string) *Disappointment {
 	running.Lock()
 	defer running.Unlock()
 
-	g := &Disappointment{Message: msg, Tags: tags}
+	g := &Disappointment{Name: t.Name(), Message: msg, Tags: tags}
 	if testing.Verbose() {
 		fmt.Println("\tDISAPPOINTMENT:", g)
 	}
