@@ -51,14 +51,3 @@ By Error:
 
 ok  	github.com/britt/testivus	0.019s
 ```
-
-## To-do
-
-* [x] Honor the `-v` flag
-* [x] Count by tag in the report
-* [x] Formatting for stdout reporting
-* [x] Report to file
-    - [x] Count broken down by test
-    - [x] Add summary to report
-* [x] Add a with error handler that tracks disappointments by error
-	- [x] Add count by error to summary
