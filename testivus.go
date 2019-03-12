@@ -13,7 +13,7 @@ import (
 	"testing"
 	"text/tabwriter"
 
-	"upspin.io/errors"
+	"github.com/pkg/errors"
 )
 
 var reportFile = flag.String("testivus.outputfile", "", "write a detailed disappointment report to a file")
@@ -209,7 +209,7 @@ func Run(m *testing.M) {
 	code := m.Run()
 	err := Report(running)
 	if err != nil {
-		fmt.Println(errors.E(err, "could not save report"))
+		fmt.Println(errors.Wrap(err, "could not save report"))
 		os.Exit(1)
 	}
 	os.Exit(code)
