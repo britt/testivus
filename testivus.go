@@ -127,6 +127,8 @@ func (d *Disappointments) summarize() Summary {
 		return s.tagRows[i].Count > s.tagRows[j].Count
 	})
 
+	s.Total = count
+
 	// count grievances by name
 	countByName := make(map[string]int)
 	for _, v := range d.Grievances {
