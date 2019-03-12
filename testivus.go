@@ -31,7 +31,7 @@ type Summary struct {
 	Total   int
 	ByName  map[string]int
 	ByTag   map[string]int
-	ByError map[error]int
+	ByError map[string]int
 
 	nameRows  []reportRow
 	tagRows   []reportRow
@@ -49,7 +49,7 @@ func (s Summary) MarshalJSON() ([]byte, error) {
 	if len(s.ByError) > 0 {
 		be := map[string]int{}
 		for e, c := range s.ByError {
-			be[e.Error()] = c
+			be[e] = c
 		}
 		m["byError"] = be
 	}
@@ -145,17 +145,17 @@ func (d *Disappointments) summarize() Summary {
 	})
 
 	// count grievances by error
-	countByError := make(map[error]int)
+	countByError := make(map[string]int)
 	for _, v := range d.Grievances {
 		for _, g := range v {
 			if g.Error != nil {
-				countByError[g.Error] = countByError[g.Error] + 1
+				countByError[g.Error.Error()] = countByError[g.Error.Error()] + 1
 			}
 		}
 	}
 	s.ByError = countByError
 	for e, c := range countByError {
-		s.errorRows = append(s.errorRows, reportRow{ID: e.Error(), Count: c})
+		s.errorRows = append(s.errorRows, reportRow{ID: e, Count: c})
 	}
 
 	sort.SliceStable(s.errorRows, func(i, j int) bool {
