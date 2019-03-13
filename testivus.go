@@ -64,14 +64,16 @@ func (d *Disappointments) String() string {
 	defer d.Unlock()
 
 	s := d.summarize()
-	if !testing.Verbose() {
-		return fmt.Sprintf("I gotta lot of problems with you people! (%d disappointments)\n", s.Total)
+	if s.Total == 0 {
+		return "No disapointments, you are truly master of your domain."
+	} else if !testing.Verbose() {
+		return fmt.Sprintf("I got a lot of problems with you people! (%d disappointments)\n", s.Total)
 	}
 
 	var buf bytes.Buffer
 	w := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)
 	fmt.Fprintf(w, "\n=== The airing of grievances:\n")
-	fmt.Fprintf(w, "I gotta lot of problems with you people! (%d disappointments)\n", s.Total)
+	fmt.Fprintf(w, "I got a lot of problems with you people! (%d disappointments)\n", s.Total)
 
 	if len(s.tagRows) > 0 {
 		fmt.Fprintf(w, "\nBy Tag:\n")
