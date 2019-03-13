@@ -65,7 +65,7 @@ func (d *Disappointments) String() string {
 
 	s := d.summarize()
 	if s.Total == 0 {
-		return "No disapointments, you are truly master of your domain."
+		return "No disapointments, you are truly master of your domain.\n"
 	} else if !testing.Verbose() {
 		return fmt.Sprintf("I got a lot of problems with you people! (%d disappointments)\n", s.Total)
 	}
@@ -230,7 +230,7 @@ func New(m *testing.M) *Disappointments {
 func Report(d *Disappointments) error {
 	fmt.Printf(d.String())
 
-	if reportFile != nil {
+	if *reportFile != "" {
 		// save output to file
 		out, err := os.OpenFile(*reportFile, os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
