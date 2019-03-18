@@ -1,4 +1,7 @@
 # testivus
+
+[![Documentation](https://godoc.org/github.com/yangwenmai/how-to-add-badge-in-github-readme?status.svg)](https://godoc.org/github.com/britt/testivus)
+
 A test helper library for the rest of us. Let your code know how it disappoints you.
 
 ## Example Usage
