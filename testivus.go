@@ -20,14 +20,14 @@ var reportFile = flag.String("testivus.outputfile", "", "write a detailed disapp
 
 // Disappointments are all the ways your code has let you down without
 // explicitly failing.
-type Disappointments struct {
+type disappointments struct {
 	sync.Mutex `json:"-"`
-	Grievances map[string][]*Disappointment `json:"grievances"`
-	Summary    Summary                      `json:"summary"`
+	Grievances map[string][]*disappointment `json:"grievances"`
+	Summary    summary                      `json:"summary"`
 }
 
 // Summary is an aggregation of all your disappointments
-type Summary struct {
+type summary struct {
 	Total   int
 	ByName  map[string]int
 	ByTag   map[string]int
@@ -39,7 +39,7 @@ type Summary struct {
 }
 
 // MarshalJSON renders the summary to JSON
-func (s Summary) MarshalJSON() ([]byte, error) {
+func (s summary) MarshalJSON() ([]byte, error) {
 	m := map[string]interface{}{
 		"total":  s.Total,
 		"byTag":  s.ByTag,
@@ -59,7 +59,7 @@ func (s Summary) MarshalJSON() ([]byte, error) {
 
 // String renders a text representation of your disappointments for the
 // airing of grievances.
-func (d *Disappointments) String() string {
+func (d *disappointments) String() string {
 	d.Lock()
 	defer d.Unlock()
 
@@ -106,8 +106,8 @@ type reportRow struct {
 	Count int
 }
 
-func (d *Disappointments) summarize() Summary {
-	s := Summary{}
+func (d *disappointments) summarize() summary {
+	s := summary{}
 	count := 0
 
 	// count grievances by tag
@@ -170,14 +170,21 @@ func (d *Disappointments) summarize() Summary {
 }
 
 // Disappointment is how your code has disappointed you
-type Disappointment struct {
+type Disappointment interface {
+	String() string
+	WithMessage(msg string) Disappointment
+	WithError(err error) Disappointment
+	WithTags(tags ...string) Disappointment
+}
+
+type disappointment struct {
 	Message string   `json:"message"`
 	Tags    []string `json:"tags"`
 	Error   error    `json:"error"`
 	Name    string   `json:"testName"`
 }
 
-func (d Disappointment) String() string {
+func (d disappointment) String() string {
 	if len(d.Tags) == 0 {
 		return d.Message
 	}
@@ -187,31 +194,31 @@ func (d Disappointment) String() string {
 }
 
 // WithMessage sets the message on the disappointment
-func (d *Disappointment) WithMessage(msg string) *Disappointment {
+func (d *disappointment) WithMessage(msg string) Disappointment {
 	d.Message = msg
 	return d
 }
 
 // WithError adds an error to the disappointment
-func (d *Disappointment) WithError(err error) *Disappointment {
+func (d *disappointment) WithError(err error) Disappointment {
 	d.Error = err
 	return d
 }
 
 // WithTags appends the given tags to the disappointment
-func (d *Disappointment) WithTags(tags ...string) *Disappointment {
+func (d *disappointment) WithTags(tags ...string) Disappointment {
 	d.Tags = append(d.Tags, tags...)
 	return d
 }
 
-var running *Disappointments
+var running *disappointments
 
 // Run can be used in place of TestMain to allow disappointment reporting
 func Run(m *testing.M) {
 	flag.Parse()
-	running = New(m)
+	running = newDisappointments(m)
 	code := m.Run()
-	err := Report(running)
+	err := report(running)
 	if err != nil {
 		fmt.Println(errors.Wrap(err, "could not save report"))
 		os.Exit(1)
@@ -221,13 +228,13 @@ func Run(m *testing.M) {
 
 // New creates a new set of disappointments.
 // Use this only if you need a custom TestMain. Otherwise you should just use Run.
-func New(m *testing.M) *Disappointments {
-	return &Disappointments{Grievances: make(map[string][]*Disappointment)}
+func newDisappointments(m *testing.M) *disappointments {
+	return &disappointments{Grievances: make(map[string][]*disappointment)}
 }
 
 // Report airs your grievances and shows a report of your disappointments.
 // Use this only if you need a custom TestMain. Otherwise you should just use Run.
-func Report(d *Disappointments) error {
+func report(d *disappointments) error {
 	fmt.Printf(d.String())
 
 	if *reportFile != "" {
@@ -248,20 +255,20 @@ func Report(d *Disappointments) error {
 	return nil
 }
 
-// Grievance registers a Disappointment
-func Grievance(t *testing.T, msg string, tags ...string) *Disappointment {
+// Grievance registers a disappointment with your code
+func Grievance(t *testing.T, msg string, tags ...string) Disappointment {
 	t.Helper()
 	running.Lock()
 	defer running.Unlock()
 
-	g := &Disappointment{Name: t.Name(), Message: msg, Tags: tags}
+	g := &disappointment{Name: t.Name(), Message: msg, Tags: tags}
 	if testing.Verbose() {
-		fmt.Println("\tDISAPPOINTMENT:", g)
+		fmt.Println("GRIEVANCE:", g)
 	}
 
 	v, ok := running.Grievances[t.Name()]
 	if !ok {
-		running.Grievances[t.Name()] = []*Disappointment{g}
+		running.Grievances[t.Name()] = []*disappointment{g}
 		return g
 	}
 
