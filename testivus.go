@@ -1,4 +1,8 @@
-// Package testivus adds disappointments to go test
+// Package testivus adds disappointments to go test. Disappointments are deficiencies that are not quite test
+// failures. Perhaps a function takes too long to run, or touches the file system too many times. Testivus
+// allows to you collect up your grievances and air them at the in the end of your test suite. It builds
+// a report that counts and categorizes your disappointments so that you can better understand compounding
+// failures and spot troublesome pieces of code.
 package testivus
 
 import (
@@ -255,7 +259,7 @@ func report(d *disappointments) error {
 	return nil
 }
 
-// Grievance registers a disappointment with your code
+// Grievance registers a disappointment with your code.
 func Grievance(t *testing.T, msg string, tags ...string) Disappointment {
 	t.Helper()
 	running.Lock()
@@ -275,4 +279,10 @@ func Grievance(t *testing.T, msg string, tags ...string) Disappointment {
 	v = append(v, g)
 	running.Grievances[t.Name()] = v
 	return g
+}
+
+// Failure registers a disappointment and fails the test.
+func Failure(t *testing.T, msg string, tags ...string) Disappointment {
+	t.Fail()
+	return Grievance(t, msg, tags...)
 }
