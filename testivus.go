@@ -265,7 +265,17 @@ func Grievance(t *testing.T, msg string, tags ...string) Disappointment {
 	running.Lock()
 	defer running.Unlock()
 
-	g := &disappointment{Name: t.Name(), Message: msg, Tags: tags}
+	var uniq []string
+	used := make(map[string]string)
+	for _, t := range tags {
+		if _, ok := used[t]; ok {
+			continue
+		}
+		used[t] = t
+		uniq = append(uniq, t)
+	}
+
+	g := &disappointment{Name: t.Name(), Message: msg, Tags: uniq}
 	if testing.Verbose() {
 		fmt.Println("GRIEVANCE:", g)
 	}
