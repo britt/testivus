@@ -44,7 +44,7 @@ func TestTestivus(t *testing.T) {
 PASS
 
 === The airing of grievances:
-I gotta lot of problems with you people! (0 disappointments)
+I gotta lot of problems with you people! (3 disappointments)
 
 By Tag:
  speed    2 ||
