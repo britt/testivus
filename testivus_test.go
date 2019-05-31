@@ -2,13 +2,15 @@ package testivus_test
 
 import (
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/britt/testivus"
 )
 
 func TestMain(m *testing.M) {
-	testivus.Run(m)
+	code := testivus.Run(m)
+	os.Exit(code)
 }
 
 func TestTestivus(t *testing.T) {

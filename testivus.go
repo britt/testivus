@@ -218,16 +218,16 @@ func (d *disappointment) WithTags(tags ...string) Disappointment {
 var running *disappointments
 
 // Run can be used in place of TestMain to allow disappointment reporting
-func Run(m *testing.M) {
+func Run(m *testing.M) int {
 	flag.Parse()
 	running = newDisappointments(m)
 	code := m.Run()
 	err := report(running)
 	if err != nil {
 		fmt.Println(errors.Wrap(err, "could not save report"))
-		os.Exit(1)
+		return 1
 	}
-	os.Exit(code)
+	return code
 }
 
 // New creates a new set of disappointments.

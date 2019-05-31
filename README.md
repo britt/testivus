@@ -16,7 +16,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	testivus.Run(m)
+	exitCode := testivus.Run(m)
+	os.Exit(exitCode)
 }
 
 func TestTestivus(t *testing.T) {
