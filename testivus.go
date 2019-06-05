@@ -194,6 +194,10 @@ func (d disappointment) String() string {
 	}
 
 	t := strings.Join(d.Tags, ", ")
+	if d.Error != nil {
+		return fmt.Sprintf("%s (%s): %v", d.Message, t, d.Error)
+	}
+
 	return fmt.Sprintf("%s (%s)", d.Message, t)
 }
 
